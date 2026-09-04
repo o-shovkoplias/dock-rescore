@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dockrescore"
+version = "0.1.0"
+description = "Machine-learning rescoring of AutoDock Vina docking poses on the PoseBusters Benchmark set"
+authors = [{ name = "Oleksandr Shovkoplias", email = "sovkoplias@gmail.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+  "typer>=0.9",
+  "pyyaml",
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "scikit-learn",
+  "matplotlib",
+  "rdkit",
+  "vina",
+  "meeko",
+  "prolif",
+  "MDAnalysis",
+  "torch",
+]
+
+[project.scripts]
+dockrescore = "dockrescore.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]

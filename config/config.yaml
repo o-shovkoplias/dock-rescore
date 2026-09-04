@@ -1,0 +1,61 @@
+# All paths are relative to the repository root.
+paths:
+  raw_dir: data/raw/posebusters_benchmark_set   # unpacked Zenodo archive
+  ids_all: data/raw/posebusters_benchmark_set_ids.txt
+  ids_308: data/raw/posebusters_pdb_ccd_ids_308.txt
+  manifest: data/manifest.csv
+  pilot_ids: data/pilot_ids.txt
+  work_dir: results/docking        # per-complex outputs (git-ignored)
+  results_dir: results
+  figures_dir: figures
+
+pilot:
+  n_complexes: 5
+  min_heavy_atoms: 15
+  max_heavy_atoms: 35
+  seed: 20260904
+
+prepare:
+  receptor_method: openbabel       # openbabel | meeko
+  add_hydrogens: true
+  box_padding: 8.0                 # Angstrom added to each side of the ligand extent
+  box_min_size: 20.0               # Angstrom, lower bound for each box edge
+
+dock:
+  scoring: vina
+  exhaustiveness: 8
+  num_modes: 20
+  energy_range: 4.0
+  seed: 42
+  cpu: 8                           # <= half of the 16 logical cores on the laptop
+  max_cpu_fraction: 0.5
+
+rmsd:
+  near_native_threshold: 2.0
+
+features:
+  prolif_interactions:
+    - HBDonor
+    - HBAcceptor
+    - Hydrophobic
+    - PiStacking
+    - Cationic
+    - Anionic
+    - CationPi
+    - PiCation
+    - XBDonor
+    - VdWContact
+  pocket_cutoff: 12.0              # Angstrom around the crystal ligand for the ProLIF protein selection
+  contact_cutoff: 4.0
+  buried_cutoff: 4.5
+
+model:
+  hidden: [128, 64]
+  dropout: 0.2
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  epochs: 200
+  batch_size: 256
+  n_folds: 5
+  seed: 0
+  device: cpu

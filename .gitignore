@@ -1,0 +1,35 @@
+# raw / large data (re-download with scripts/fetch_data.sh)
+data/raw/
+data/work/
+results/raw/
+results/docking/
+*.zip
+*.tar.gz
+*.tar.zst
+
+# MD / large binaries
+*.xtc
+*.trr
+*.tpr
+*.cpt
+*.edr
+*.npy
+*.npz
+*.pt
+*.pth
+*.h5
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# misc
+*.log
+.DS_Store

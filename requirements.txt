@@ -1,0 +1,15 @@
+# pip mirror of environment.yml (vina/openbabel are easier to get from conda-forge)
+typer>=0.9
+pyyaml
+numpy
+pandas
+pyarrow
+scikit-learn
+matplotlib
+rdkit
+vina
+meeko
+prolif
+MDAnalysis
+biopython
+torch

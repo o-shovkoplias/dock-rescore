@@ -1,0 +1,26 @@
+# conda env used for this repository ("dock").
+#   mamba env create -f environment.yml
+name: dock
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - python>=3.11
+  - rdkit
+  - vina            # AutoDock Vina 1.2.x python bindings
+  - meeko           # ligand PDBQT preparation
+  - openbabel       # receptor PDBQT preparation
+  - prolif          # protein-ligand interaction fingerprints
+  - mdanalysis
+  - biopython
+  - pytorch
+  - pytorch-cuda=12.1   # optional; the pipeline runs on CPU
+  - scikit-learn
+  - pandas
+  - pyarrow
+  - numpy
+  - matplotlib
+  - typer
+  - pyyaml
+  - pip
