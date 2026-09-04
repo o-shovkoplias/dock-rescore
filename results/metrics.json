@@ -1,0 +1,22 @@
+{
+  "n_complexes": 5,
+  "n_poses": 89,
+  "near_native_pose_fraction": 0.056179775280898875,
+  "oracle_top1_success": 0.8,
+  "vina": {
+    "top1_success": 0.8,
+    "top1_hits": 4,
+    "top3_near_native_fraction": 0.3333333333333333,
+    "top3_enrichment": 5.933333333333334,
+    "roc_auc": 0.8571428571428572
+  },
+  "ml": {
+    "top1_success": 0.8,
+    "top1_hits": 4,
+    "top3_near_native_fraction": 0.3333333333333333,
+    "top3_enrichment": 5.933333333333334,
+    "roc_auc": 0.7214285714285715
+  },
+  "n_features": 70,
+  "cv_note": "GroupKFold n_folds=5 over 5 complexes"
+}
