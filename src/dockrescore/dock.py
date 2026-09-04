@@ -27,6 +27,20 @@ def pdbqt_poses_to_sdf(poses_pdbqt: Path, out_sdf: Path) -> int:
     return sdf_string.count("$$$$")
 
 
+def _split_energy_row(e: list[float]) -> list[float]:
+    """Map a ``Vina.energies()`` row to (total, inter, intra, torsion, intra_best).
+
+    Vina 1.2 returns 5 columns [total, inter, intra, torsions, intra_best] for the vina/vinardo
+    scoring functions, or the 8-column expanded form
+    [total, lig_inter, flex_inter, other_inter, flex_intra, lig_intra, torsions, lig_intra_best].
+    """
+    if len(e) >= 8:
+        return [e[0], e[1] + e[2] + e[3], e[4] + e[5], e[6], e[7]]
+    if len(e) == 5:
+        return list(e)
+    return [*e, *([float("nan")] * (5 - len(e)))][:5]
+
+
 def dock_complex(cp: ComplexPaths, cfg: dict[str, Any], force: bool = False) -> list[dict[str, float]]:
     """Dock one prepared complex with Vina; returns the score table (also written to CSV)."""
     if cp.scores_csv.exists() and cp.poses_sdf.exists() and not force:
@@ -46,9 +60,7 @@ def dock_complex(cp: ComplexPaths, cfg: dict[str, Any], force: bool = False) -> 
     v.write_poses(str(cp.poses_pdbqt), n_poses=n, energy_range=er, overwrite=True)
     rows = []
     for i, e in enumerate(energies, start=1):
-        e = list(map(float, e))
-        # vina.energies columns: total, inter, intra, torsional, intra(best pose)
-        rows.append(dict(zip(SCORE_COLUMNS, [i, e[0], e[1], e[2], e[3], e[4] if len(e) > 4 else float("nan")])))
+        rows.append(dict(zip(SCORE_COLUMNS, [i, *_split_energy_row([float(x) for x in e])])))
     with cp.scores_csv.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=SCORE_COLUMNS)
         w.writeheader()

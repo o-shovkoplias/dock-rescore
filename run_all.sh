@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Single entry point. Runs from the repository root inside the "dock" conda env.
 #   bash run_all.sh                 # pilot (data/pilot_ids.txt)
-#   IDS=data/ids_308.txt bash run_all.sh   # full run (phase 2; hours of CPU docking)
+#   IDS=data/ids_308.txt bash run_all.sh   # full 308-complex run (phase 2; hours of CPU docking)
 set -euo pipefail
 cd "$(dirname "$0")"
 export PYTHONPATH="${PYTHONPATH:-}:$PWD/src"
@@ -34,4 +34,5 @@ echo "[7/8] train/evaluate MLP (GroupKFold by complex, CPU)"
 $PY -m dockrescore train
 echo "[8/8] figures + report"
 $PY -m dockrescore report --ids "$IDS"
+$PY scripts/update_readme.py
 echo "== done: results/metrics.json, results/report.md, figures/top1_success.png =="
