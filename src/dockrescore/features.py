@@ -24,6 +24,15 @@ from dockrescore.rmsd import pairwise_pose_rmsd
 
 RDLogger.DisableLog("rdApp.*")
 
+# vdW radii (A) missing from MDAnalysis' default bond-guessing table (halogens, metals, both cases).
+EXTRA_VDW: dict[str, float] = {
+    k: v
+    for base, v in {"CL": 1.75, "BR": 1.85, "I": 1.98, "F": 1.47, "ZN": 1.39, "MG": 1.73, "CA": 1.90, "NA": 2.27,
+                    "K": 2.75, "FE": 1.50, "MN": 1.60, "CO": 1.50, "NI": 1.60, "CU": 1.40, "SE": 1.90, "CD": 1.58,
+                    "HG": 1.55, "MO": 2.10, "W": 2.10}.items()
+    for k in (base, base.capitalize())
+}
+
 # Fixed list of 40 RDKit 2D descriptors (name -> callable(mol)).
 RDKIT_2D: dict[str, Any] = {
     "MolWt": Descriptors.MolWt,
@@ -127,7 +136,7 @@ def prolif_counts(poses: list[Chem.Mol], cp: ComplexPaths, cfg: dict[str, Any]) 
         half = max(box["size"]) / 2 + cut
         sel = u.select_atoms(f"byres (point {cx} {cy} {cz} {half})")
         sel = sel.select_atoms("not resname HOH WAT")
-        sel.guess_bonds()
+        sel.guess_bonds(vdwradii=EXTRA_VDW)
         prot = plf.Molecule.from_mda(sel, NoImplicit=False)
         fp = plf.Fingerprint(inter, count=True)
         ligs = [plf.Molecule.from_rdkit(m) for m in poses]

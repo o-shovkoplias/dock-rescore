@@ -37,7 +37,10 @@ def main() -> None:
     per_hour = 3600 / mean_total if mean_total > 0 else float("nan")
     lines += ["", f"Mean {mean_total:.0f} s per complex -> about {per_hour:.0f} complexes per CPU-hour, "
               f"i.e. roughly {4*per_hour:.0f}-{6*per_hour:.0f} complexes in 4-6 CPU-hours at this exhaustiveness "
-              f"(the 308-complex subset needs about {308*mean_total/3600:.1f} h).",
+              f"(the 308-complex subset needs about {308*mean_total/3600:.1f} h). Caveat: the pilot was drawn from "
+              f"small-to-medium ligands (15-35 heavy atoms) and receptors < 8000 atoms, so this is an optimistic "
+              f"lower bound; larger ligands/boxes dock slower (Vina scales with box volume and torsions). Plan phase 2 "
+              f"with a 2-3x margin, and re-check timing on the first 30 complexes of the full run.",
               "", "Software: " + ", ".join(f"{k} {v[k]}" for k in ("vina", "meeko", "rdkit", "prolif", "openbabel", "torch", "MDAnalysis", "sklearn") if k in v) + "."]
     readme = Path("README.md").read_text()
     a, b = readme.index(START) + len(START), readme.index(END)

@@ -68,7 +68,30 @@ def receptor_to_pdbqt_openbabel(pdb: Path, out_pdbqt: Path, out_h_pdb: Path, add
     if add_h:
         mol.OBMol.AddHydrogens(False, True, 7.4)  # polaronly=False, correctForPH=True
     mol.write("pdb", str(out_h_pdb), overwrite=True)
+    regroup_pdb_residues(out_h_pdb)
     mol.write("pdbqt", str(out_pdbqt), overwrite=True, opt={"r": None})  # -xr : rigid receptor, no ROOT/BRANCH
+
+
+def regroup_pdb_residues(pdb: Path) -> None:
+    """Rewrite a PDB so that all atoms of a residue are contiguous (heavy atoms first, then H).
+
+    OpenBabel appends added hydrogens after all heavy atoms, which makes MDAnalysis/ProLIF split
+    every residue in two. Residue order follows first appearance; serials are renumbered.
+    """
+    groups: dict[tuple[str, str, str, str], list[str]] = {}
+    for ln in pdb.read_text().splitlines():
+        if ln.startswith(("ATOM", "HETATM")):
+            key = (ln[21], ln[22:26], ln[26], ln[17:20])
+            groups.setdefault(key, []).append(ln)
+    out, serial = [], 1
+    for lines in groups.values():
+        heavy = [l for l in lines if l[76:78].strip() != "H"]
+        hyd = [l for l in lines if l[76:78].strip() == "H"]
+        for l in heavy + hyd:
+            out.append(f"{l[:6]}{serial:5d}{l[11:]}")
+            serial += 1
+    out.append("END")
+    pdb.write_text("\n".join(out) + "\n")
 
 
 def receptor_to_pdbqt_meeko(pdb: Path, out_pdbqt: Path, out_h_pdb: Path) -> None:

@@ -86,7 +86,7 @@ def main() -> None:
     out = Path(cfg["paths"]["manifest"])
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]), lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     print(f"[make_manifest] wrote {out} with {len(rows)} complexes "

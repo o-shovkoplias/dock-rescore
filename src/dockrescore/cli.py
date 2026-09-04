@@ -14,7 +14,7 @@ from typing import Optional
 import pandas as pd
 import typer
 
-from dockrescore.config import Timer, complex_paths, load_config, read_ids, rpath
+from dockrescore.config import Timer, complex_paths, load_config, read_ids, rpath, stage_done
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -62,11 +62,16 @@ def _stage(name: str, fn, config: str, ids: Optional[str], force: bool) -> None:
     ok, failed = 0, []
     for cid in read_ids(cfg, ids):
         cp = complex_paths(cfg, cid)
+        if not force and stage_done(cp, name):
+            ok += 1
+            _log(f"{name} {cid} cached, skipped (timing kept)")
+            continue
         timer = Timer(cp.timing_json)
         try:
             with timer(name):
                 fn(cp, cfg, force)
             ok += 1
+            (cp.work_dir / f"{name}.error.txt").unlink(missing_ok=True)
             _log(f"{name} {cid} done in {timer.data[name]:.1f} s")
         except Exception as e:  # noqa: BLE001
             failed.append(cid)

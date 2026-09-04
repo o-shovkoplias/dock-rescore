@@ -33,6 +33,7 @@ class MLP(nn.Module):
 
 
 def _fit(x: np.ndarray, y: np.ndarray, mcfg: dict[str, Any], seed: int) -> MLP:
+    torch.set_num_threads(int(mcfg.get("torch_threads", 4)))  # tiny batches: more threads only add spin overhead
     torch.manual_seed(seed)
     dev = torch.device(mcfg.get("device", "cpu"))
     model = MLP(x.shape[1], list(mcfg["hidden"]), float(mcfg["dropout"])).to(dev)

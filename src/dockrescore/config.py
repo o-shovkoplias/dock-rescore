@@ -91,6 +91,17 @@ class ComplexPaths:
         return self.work_dir / "timing.json"
 
 
+def stage_done(cp: ComplexPaths, stage: str) -> bool:
+    """True if the outputs of ``stage`` already exist for this complex (used to skip cached work)."""
+    outputs = {
+        "prepare": (cp.receptor_pdbqt, cp.receptor_h_pdb, cp.ligand_pdbqt, cp.box_json),
+        "dock": (cp.poses_pdbqt, cp.poses_sdf, cp.scores_csv),
+        "rmsd": (cp.rmsd_csv,),
+        "features": (cp.features_csv,),
+    }[stage]
+    return all(p.exists() for p in outputs)
+
+
 def complex_paths(cfg: dict[str, Any], complex_id: str) -> ComplexPaths:
     cp = ComplexPaths(
         complex_id=complex_id,

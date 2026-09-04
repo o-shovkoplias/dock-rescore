@@ -62,7 +62,7 @@ def dock_complex(cp: ComplexPaths, cfg: dict[str, Any], force: bool = False) -> 
     for i, e in enumerate(energies, start=1):
         rows.append(dict(zip(SCORE_COLUMNS, [i, *_split_energy_row([float(x) for x in e])])))
     with cp.scores_csv.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=SCORE_COLUMNS)
+        w = csv.DictWriter(fh, fieldnames=SCORE_COLUMNS, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     n_sdf = pdbqt_poses_to_sdf(cp.poses_pdbqt, cp.poses_sdf)

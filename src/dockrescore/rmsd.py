@@ -56,7 +56,7 @@ def rmsd_complex(cp: ComplexPaths, cfg: dict[str, Any], force: bool = False) -> 
         r = symm_rmsd(m, ref)
         rows.append({"vina_rank": i, "rmsd": round(r, 4), "near_native": int(r < thr)})
     with cp.rmsd_csv.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=["vina_rank", "rmsd", "near_native"])
+        w = csv.DictWriter(fh, fieldnames=["vina_rank", "rmsd", "near_native"], lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     return rows
