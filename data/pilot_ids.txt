@@ -1,0 +1,6 @@
+# pilot complexes: 308-subset, 15-35 heavy atoms, <8000 protein atoms, seed 20260904
+7D5C_GV6
+7N03_ZRP
+7P1M_4IU
+7TUO_KL9
+7YZU_DO7

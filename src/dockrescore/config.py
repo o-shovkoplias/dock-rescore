@@ -104,7 +104,12 @@ def complex_paths(cfg: dict[str, Any], complex_id: str) -> ComplexPaths:
 def read_ids(cfg: dict[str, Any], ids_file: str | None = None) -> list[str]:
     """Complex ids to process: explicit file, else the pilot list from the config."""
     f = rpath(ids_file or cfg["paths"]["pilot_ids"])
-    return [x for x in f.read_text().split() if x and not x.startswith("#")]
+    ids = []
+    for line in f.read_text().splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            ids.append(line.split()[0])
+    return ids
 
 
 class Timer:

@@ -85,8 +85,12 @@ def _protein_heavy_xyz(pdb: Path) -> np.ndarray:
     xyz = []
     with pdb.open() as fh:
         for ln in fh:
-            if ln.startswith(("ATOM", "HETATM")) and ln[76:78].strip() != "H" and ln[12:16].strip()[0] != "H":
-                xyz.append((float(ln[30:38]), float(ln[38:46]), float(ln[46:54])))
+            if not ln.startswith(("ATOM", "HETATM")):
+                continue
+            elem, name = ln[76:78].strip(), ln[12:16].strip()
+            if elem == "H" or (not elem and name[:1] == "H"):
+                continue
+            xyz.append((float(ln[30:38]), float(ln[38:46]), float(ln[46:54])))
     return np.asarray(xyz)
 
 

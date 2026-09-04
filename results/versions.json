@@ -1,0 +1,14 @@
+{
+  "python": "3.11.16",
+  "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
+  "rdkit": "2026.03.1",
+  "vina": "1.2.7",
+  "meeko": "0.8.0",
+  "openbabel": "3.2.1",
+  "prolif": "2.2.1",
+  "MDAnalysis": "2.10.0",
+  "torch": "2.13.0",
+  "sklearn": "1.9.0",
+  "numpy": "2.4.6",
+  "pandas": "3.0.5"
+}
