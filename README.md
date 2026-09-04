@@ -15,7 +15,29 @@ statistical meaning and must not be quoted as a benchmark result.
 ![top-1 success](figures/top1_success.png)
 
 <!-- RESULTS_TABLE_START -->
-_(filled in by the pilot run; see results/report.md)_
+Pilot: **5 complexes, 89 poses, 70 features**; GroupKFold n_folds=5 over 5 complexes. Near-native pose fraction 0.06; oracle top-1 (any pose < 2 Å) 0.80.
+
+| metric | Vina rank | ML rescoring (out-of-fold) |
+|---|---|---|
+| top1_success | 0.800 | 0.800 |
+| top1_hits | 4 | 4 |
+| top3_near_native_fraction | 0.333 | 0.333 |
+| top3_enrichment | 5.933 | 5.933 |
+| roc_auc | 0.857 | 0.721 |
+
+Wall-clock per complex (s, 8 Vina threads on CPU):
+
+| complex | prepare | dock | rmsd | features | total |
+|---|---|---|---|---|---|
+| 7D5C_GV6 | 1.0 | 12.0 | 0.0 | 5.2 | 18.2 |
+| 7N03_ZRP | 0.0 | 6.9 | 0.0 | 2.5 | 9.4 |
+| 7P1M_4IU | 0.1 | 4.5 | 0.0 | 2.0 | 6.6 |
+| 7TUO_KL9 | 0.1 | 5.8 | 0.0 | 3.6 | 9.5 |
+| 7YZU_DO7 | 0.1 | 2.6 | 0.0 | 2.8 | 5.5 |
+
+Mean 10 s per complex -> about 366 complexes per CPU-hour, i.e. roughly 1463-2195 complexes in 4-6 CPU-hours at this exhaustiveness (the 308-complex subset needs about 0.8 h). Caveat: the pilot was drawn from small-to-medium ligands (15-35 heavy atoms) and receptors < 8000 atoms, so this is an optimistic lower bound; larger ligands/boxes dock slower (Vina scales with box volume and torsions). Plan phase 2 with a 2-3x margin, and re-check timing on the first 30 complexes of the full run.
+
+Software: vina 1.2.7, meeko 0.8.0, rdkit 2026.03.1, prolif 2.2.1, openbabel 3.2.1, torch 2.13.0, MDAnalysis 2.10.0, sklearn 1.9.0.
 <!-- RESULTS_TABLE_END -->
 
 Hardware: laptop with 16 logical CPU cores, 14 GB RAM, NVIDIA RTX 4060 Laptop 8 GB (GPU **not**
