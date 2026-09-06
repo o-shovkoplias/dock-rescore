@@ -1,22 +1,22 @@
 {
-  "n_complexes": 5,
-  "n_poses": 89,
-  "near_native_pose_fraction": 0.056179775280898875,
-  "oracle_top1_success": 0.8,
+  "n_complexes": 273,
+  "n_poses": 4745,
+  "near_native_pose_fraction": 0.0821917808219178,
+  "oracle_top1_success": 0.9010989010989011,
   "vina": {
-    "top1_success": 0.8,
-    "top1_hits": 4,
-    "top3_near_native_fraction": 0.3333333333333333,
-    "top3_enrichment": 5.933333333333334,
-    "roc_auc": 0.8571428571428572
+    "top1_success": 0.7216117216117216,
+    "top1_hits": 197,
+    "top3_near_native_fraction": 0.3763837638376384,
+    "top3_enrichment": 4.5793357933579335,
+    "roc_auc": 0.6935308663781683
   },
   "ml": {
-    "top1_success": 0.8,
-    "top1_hits": 4,
-    "top3_near_native_fraction": 0.3333333333333333,
-    "top3_enrichment": 5.933333333333334,
-    "roc_auc": 0.7214285714285715
+    "top1_success": 0.7875457875457875,
+    "top1_hits": 215,
+    "top3_near_native_fraction": 0.4157441574415744,
+    "top3_enrichment": 5.058220582205822,
+    "roc_auc": 0.9496423209396805
   },
   "n_features": 70,
-  "cv_note": "GroupKFold n_folds=5 over 5 complexes"
+  "cv_note": "GroupKFold n_folds=5 over 273 complexes"
 }
