@@ -92,7 +92,8 @@ def ranking_metrics(df: pd.DataFrame, score_col: str, higher_is_better: bool, to
 def cross_validate(features: pd.DataFrame, cfg: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
     """GroupKFold (by complex) out-of-fold predictions and Vina-vs-ML metrics."""
     mcfg = cfg["model"]
-    cols = feature_columns(features)
+    excluded = set(mcfg.get("exclude_features", []) or [])
+    cols = [c for c in feature_columns(features) if c not in excluded]
     df = features.copy()
     x_all = df[cols].astype(float).replace([np.inf, -np.inf], np.nan).fillna(0.0).values
     y_all = df["near_native"].values.astype(float)
@@ -121,7 +122,7 @@ def cross_validate(features: pd.DataFrame, cfg: dict[str, Any]) -> tuple[pd.Data
         "oracle_top1_success": float(df.groupby("complex_id")["near_native"].max().mean()),
         "vina": ranking_metrics(df, "vina_total", higher_is_better=False),
         "ml": ranking_metrics(df, "ml_prob", higher_is_better=True),
-        "n_features": len(cols),
+        "n_features": len(cols), "excluded_features": sorted(excluded & set(feature_columns(features))),
         "cv_note": note,
     }
     return df, metrics

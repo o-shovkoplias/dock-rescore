@@ -11,12 +11,15 @@
     "roc_auc": 0.6935308663781683
   },
   "ml": {
-    "top1_success": 0.7875457875457875,
-    "top1_hits": 215,
-    "top3_near_native_fraction": 0.4157441574415744,
-    "top3_enrichment": 5.058220582205822,
-    "roc_auc": 0.9496423209396805
+    "top1_success": 0.717948717948718,
+    "top1_hits": 196,
+    "top3_near_native_fraction": 0.37761377613776137,
+    "top3_enrichment": 4.59430094300943,
+    "roc_auc": 0.9066790308810974
   },
-  "n_features": 70,
+  "n_features": 69,
+  "excluded_features": [
+    "geo_centroid_offset"
+  ],
   "cv_note": "GroupKFold n_folds=5 over 273 complexes"
 }

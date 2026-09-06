@@ -47,14 +47,18 @@ def plot_rmsd_vs_rank(preds: pd.DataFrame, out: Path) -> None:
     fig, ax = plt.subplots(figsize=(6.2, 3.6), dpi=150, facecolor=SURFACE)
     ax.set_facecolor(SURFACE)
     ax.axhspan(0, 2.0, color="#e3eefb", zorder=0)
+    n = preds["complex_id"].nunique()
+    small = n <= 10  # per-complex legend only makes sense for a pilot-sized run
     for i, (cid, g) in enumerate(preds.groupby("complex_id")):
-        ax.plot(g["vina_rank"], g["rmsd"], "o-", ms=3.5, lw=1.2, color=C_VINA, alpha=0.35 + 0.65 * (i == 0), label=cid if i < 8 else None)
+        ax.plot(g["vina_rank"], g["rmsd"], "o-", ms=3.5, lw=1.2, color=C_VINA,
+                alpha=(0.35 + 0.65 * (i == 0)) if small else 0.15, label=cid if small else None)
     ax.set_xlabel("Vina rank", color=INK2)
     ax.set_ylabel("Heavy-atom RMSD to crystal (Å)", color=INK2)
-    ax.set_title("Pose RMSD by Vina rank (shaded: near-native < 2 Å)", color=INK, fontsize=11)
+    ax.set_title(f"Pose RMSD by Vina rank, n = {n} complexes (shaded: near-native < 2 Å)", color=INK, fontsize=11)
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
-    ax.legend(fontsize=7, frameon=False, ncol=2)
+    if small:
+        ax.legend(fontsize=7, frameon=False, ncol=2)
     fig.tight_layout()
     fig.savefig(out, facecolor=SURFACE)
     plt.close(fig)

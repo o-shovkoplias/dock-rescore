@@ -1,15 +1,15 @@
 # dock-rescore report
 
-Complexes: 273, poses: 4745, features: 70
+Complexes: 273, poses: 4745, features: 69
 CV: GroupKFold n_folds=5 over 273 complexes
 
 | metric | Vina rank | ML rescoring |
 |---|---|---|
-| top1_success | 0.722 | 0.788 |
-| top1_hits | 197 | 215 |
-| top3_near_native_fraction | 0.376 | 0.416 |
-| top3_enrichment | 4.579 | 5.058 |
-| roc_auc | 0.694 | 0.950 |
+| top1_success | 0.722 | 0.718 |
+| top1_hits | 197 | 196 |
+| top3_near_native_fraction | 0.376 | 0.378 |
+| top3_enrichment | 4.579 | 4.594 |
+| roc_auc | 0.694 | 0.907 |
 
 Oracle top-1 (any near-native pose): 0.901
 Near-native pose fraction: 0.082

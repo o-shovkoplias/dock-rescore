@@ -1,0 +1,233 @@
+{
+  "Vina rank": {
+    "n_features": 1,
+    "seeds": {
+      "-": {
+        "top1_success": 0.7216117216117216,
+        "top1_hits": 197,
+        "top3_near_native_fraction": 0.3763837638376384,
+        "top3_enrichment": 4.5793357933579335,
+        "roc_auc": 0.6935308663781683,
+        "per_complex_auc": 0.9347868417658176
+      }
+    }
+  },
+  "centroid offset alone (no model)": {
+    "n_features": 1,
+    "seeds": {
+      "-": {
+        "top1_success": 0.7435897435897436,
+        "top1_hits": 203,
+        "top3_near_native_fraction": 0.4059040590405904,
+        "top3_enrichment": 4.93849938499385,
+        "roc_auc": 0.9664505873001855,
+        "per_complex_auc": 0.965999291600195
+      }
+    }
+  },
+  "full (as reported)": {
+    "n_features": 70,
+    "seeds": {
+      "0": {
+        "top1_success": 0.7875457875457875,
+        "top1_hits": 215,
+        "top3_near_native_fraction": 0.4157441574415744,
+        "top3_enrichment": 5.058220582205822,
+        "roc_auc": 0.9496423209396805,
+        "per_complex_auc": 0.9724647704175173,
+        "top1_delta_vs_vina_ci95": [
+          0.03296703296703297,
+          0.10256410256410256
+        ]
+      },
+      "1": {
+        "top1_success": 0.7912087912087912,
+        "top1_hits": 216,
+        "top3_near_native_fraction": 0.41697416974169743,
+        "top3_enrichment": 5.073185731857319,
+        "roc_auc": 0.9489157761488417,
+        "per_complex_auc": 0.9702610776815064,
+        "top1_delta_vs_vina_ci95": [
+          0.03296703296703297,
+          0.10989010989010989
+        ]
+      },
+      "2": {
+        "top1_success": 0.7948717948717948,
+        "top1_hits": 217,
+        "top3_near_native_fraction": 0.4157441574415744,
+        "top3_enrichment": 5.058220582205822,
+        "roc_auc": 0.9496561570844005,
+        "per_complex_auc": 0.9701595040271748,
+        "top1_delta_vs_vina_ci95": [
+          0.03663003663003663,
+          0.10989010989010989
+        ]
+      }
+    }
+  },
+  "drop geo_centroid_offset": {
+    "n_features": 69,
+    "seeds": {
+      "0": {
+        "top1_success": 0.717948717948718,
+        "top1_hits": 196,
+        "top3_near_native_fraction": 0.37761377613776137,
+        "top3_enrichment": 4.59430094300943,
+        "roc_auc": 0.9066790308810974,
+        "per_complex_auc": 0.938400440463442,
+        "top1_delta_vs_vina_ci95": [
+          -0.03296703296703297,
+          0.02564102564102564
+        ]
+      },
+      "1": {
+        "top1_success": 0.7106227106227107,
+        "top1_hits": 194,
+        "top3_near_native_fraction": 0.37392373923739236,
+        "top3_enrichment": 4.54940549405494,
+        "roc_auc": 0.9068418263711029,
+        "per_complex_auc": 0.9320718104091453,
+        "top1_delta_vs_vina_ci95": [
+          -0.040293040293040296,
+          0.014652014652014652
+        ]
+      },
+      "2": {
+        "top1_success": 0.717948717948718,
+        "top1_hits": 196,
+        "top3_near_native_fraction": 0.37761377613776137,
+        "top3_enrichment": 4.59430094300943,
+        "roc_auc": 0.9027118843651564,
+        "per_complex_auc": 0.9357074772168363,
+        "top1_delta_vs_vina_ci95": [
+          -0.029304029304029304,
+          0.02197802197802198
+        ]
+      }
+    }
+  },
+  "drop geo_centroid_offset + cons_*": {
+    "n_features": 66,
+    "seeds": {
+      "0": {
+        "top1_success": 0.7289377289377289,
+        "top1_hits": 199,
+        "top3_near_native_fraction": 0.37761377613776137,
+        "top3_enrichment": 4.59430094300943,
+        "roc_auc": 0.8780164267420295,
+        "per_complex_auc": 0.9266516838854301,
+        "top1_delta_vs_vina_ci95": [
+          -0.029304029304029304,
+          0.04395604395604396
+        ]
+      },
+      "1": {
+        "top1_success": 0.7216117216117216,
+        "top1_hits": 197,
+        "top3_near_native_fraction": 0.37884378843788435,
+        "top3_enrichment": 4.609266092660927,
+        "roc_auc": 0.8773001854632164,
+        "per_complex_auc": 0.9303033821394376,
+        "top1_delta_vs_vina_ci95": [
+          -0.03663003663003663,
+          0.03663003663003663
+        ]
+      },
+      "2": {
+        "top1_success": 0.706959706959707,
+        "top1_hits": 193,
+        "top3_near_native_fraction": 0.3849938499384994,
+        "top3_enrichment": 4.684091840918409,
+        "roc_auc": 0.8852330065648092,
+        "per_complex_auc": 0.9305389089701815,
+        "top1_delta_vs_vina_ci95": [
+          -0.05128205128205128,
+          0.02197802197802198
+        ]
+      }
+    }
+  },
+  "drop geo_centroid_offset + cons_* + plf_*": {
+    "n_features": 55,
+    "seeds": {
+      "0": {
+        "top1_success": 0.6959706959706959,
+        "top1_hits": 190,
+        "top3_near_native_fraction": 0.36531365313653136,
+        "top3_enrichment": 4.4446494464944655,
+        "roc_auc": 0.8709776560982072,
+        "per_complex_auc": 0.9226641729855621,
+        "top1_delta_vs_vina_ci95": [
+          -0.054945054945054944,
+          0.003663003663003663
+        ]
+      },
+      "1": {
+        "top1_success": 0.6959706959706959,
+        "top1_hits": 190,
+        "top3_near_native_fraction": 0.3726937269372694,
+        "top3_enrichment": 4.5344403444034445,
+        "roc_auc": 0.8749035885660456,
+        "per_complex_auc": 0.9262831876533147,
+        "top1_delta_vs_vina_ci95": [
+          -0.054945054945054944,
+          0.003663003663003663
+        ]
+      },
+      "2": {
+        "top1_success": 0.706959706959707,
+        "top1_hits": 193,
+        "top3_near_native_fraction": 0.3677736777367774,
+        "top3_enrichment": 4.474579745797459,
+        "roc_auc": 0.8766752038623452,
+        "per_complex_auc": 0.9255251725232218,
+        "top1_delta_vs_vina_ci95": [
+          -0.04395604395604396,
+          0.014652014652014652
+        ]
+      }
+    }
+  },
+  "Vina terms only": {
+    "n_features": 8,
+    "seeds": {
+      "0": {
+        "top1_success": 0.717948717948718,
+        "top1_hits": 196,
+        "top3_near_native_fraction": 0.3763837638376384,
+        "top3_enrichment": 4.5793357933579335,
+        "roc_auc": 0.8930118637581324,
+        "per_complex_auc": 0.934127521772156,
+        "top1_delta_vs_vina_ci95": [
+          -0.014652014652014652,
+          0.007326007326007326
+        ]
+      },
+      "1": {
+        "top1_success": 0.7216117216117216,
+        "top1_hits": 197,
+        "top3_near_native_fraction": 0.3800738007380074,
+        "top3_enrichment": 4.624231242312423,
+        "roc_auc": 0.8990444228561336,
+        "per_complex_auc": 0.9356490158334396,
+        "top1_delta_vs_vina_ci95": [
+          -0.01098901098901099,
+          0.01098901098901099
+        ]
+      },
+      "2": {
+        "top1_success": 0.717948717948718,
+        "top1_hits": 196,
+        "top3_near_native_fraction": 0.3763837638376384,
+        "top3_enrichment": 4.5793357933579335,
+        "roc_auc": 0.8946727898966704,
+        "per_complex_auc": 0.9284375614521884,
+        "top1_delta_vs_vina_ci95": [
+          -0.01098901098901099,
+          0.0
+        ]
+      }
+    }
+  }
+}

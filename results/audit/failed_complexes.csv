@@ -1,0 +1,36 @@
+complex_id,failed_stage,reason
+6XM9_V55,features,ProLIF VdWContact: no vdW radius for metal Co (Fingerprint vdwradii not extended)
+6ZAE_ACV,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+6ZPB_3D1,features,ProLIF VdWContact: no vdW radius for metal Co (Fingerprint vdwradii not extended)
+7B2C_TP7,dock,receptor PDBQT contains element Xe not typed by AutoDock Vina (Vina::set_receptor)
+7BMI_U4B,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7CL8_TES,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7CNQ_G8X,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7D6O_MTE,dock,receptor PDBQT contains element Mo not typed by AutoDock Vina (Vina::set_receptor)
+7FT9_4MB,features,"ProLIF residue lookup ResidueId(UNL, 10, None) missing in protein selection (residue-key mismatch after OpenBabel protonation)"
+7L03_F9F,features,"ProLIF residue lookup ResidueId(ALA, 185, A) missing in protein selection (residue-key mismatch after OpenBabel protonation)"
+7L5F_XNG,features,ProLIF VdWContact: no vdW radius for metal Co (Fingerprint vdwradii not extended)
+7LOU_IFM,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7MWN_WI5,features,"ProLIF residue lookup ResidueId(THR, 156, A) missing in protein selection (residue-key mismatch after OpenBabel protonation)"
+7N6F_0I1,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7N7B_T3F,features,"ProLIF residue lookup ResidueId(ALA, 216, A) missing in protein selection (residue-key mismatch after OpenBabel protonation)"
+7NF0_BYN,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7NF3_4LU,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7ODY_DGI,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7P5T_5YG,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7Q27_8KC,dock,receptor PDBQT contains element B not typed by AutoDock Vina (Vina::set_receptor)
+7R3D_APR,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7RKW_5TV,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7TS6_KMI,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7TSF_H4B,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7UQ3_O2U,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7V3N_AKG,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7V43_C4O,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7VYJ_CA0,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+7WY1_D0L,dock,receptor PDBQT contains element Mo not typed by AutoDock Vina (Vina::set_receptor)
+7X9K_8OG,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+7ZCC_OGA,features,ProLIF VdWContact: no vdW radius for metal Mn (Fingerprint vdwradii not extended)
+8D39_QDB,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)
+8DHG_T78,features,"ProLIF residue lookup ResidueId(ALA, 31, A) missing in protein selection (residue-key mismatch after OpenBabel protonation)"
+8F4J_PHO,features,MDAnalysis cannot parse OpenBabel receptor_h.pdb (coordinate column overflow)
+8HO0_3ZI,features,ProLIF VdWContact: no vdW radius for metal Fe (Fingerprint vdwradii not extended)

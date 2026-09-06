@@ -116,6 +116,8 @@ def geometric_features(pose: Chem.Mol, prot_xyz: np.ndarray, center: np.ndarray,
         "geo_min_dist": float(dmin.min()),
         "geo_mean_min_dist": float(dmin.mean()),
         "geo_n_close_lt_2p5": float((d < 2.5).sum()),
+        # NOTE: the box centre is the crystal-ligand centroid (prepare.docking_box), so this feature is the
+        # translational part of the RMSD label. Redocking-only; see README "Scope and leakage audit".
         "geo_centroid_offset": float(np.linalg.norm(lxyz.mean(0) - center)),
         "geo_radius_gyration": float(np.sqrt(((lxyz - lxyz.mean(0)) ** 2).sum(1).mean())),
     }

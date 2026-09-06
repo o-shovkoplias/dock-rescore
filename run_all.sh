@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Single entry point. Runs from the repository root inside the "dock" conda env.
 #   bash run_all.sh                 # pilot (data/pilot_ids.txt)
-#   IDS=data/ids_308.txt bash run_all.sh   # full 308-complex run (phase 2; hours of CPU docking)
+#   IDS=data/ids_308.txt bash run_all.sh   # full 308-complex run (~1.1 h CPU on a 16-core laptop)
+# WARNING: results/features.csv, metrics.json, predictions.csv, report.md, figures/ and the README
+# results block are rewritten for the given id list; a pilot run after the full run overwrites the
+# full-run summaries (per-complex outputs in results/docking/ are cached and kept).
 set -euo pipefail
 cd "$(dirname "$0")"
 export PYTHONPATH="${PYTHONPATH:-}:$PWD/src"

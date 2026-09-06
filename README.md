@@ -3,348 +3,95 @@
 Machine-learning rescoring of AutoDock Vina docking poses on the PoseBusters Benchmark set.
 Redock each ligand into its own receptor with Vina, then train a small PyTorch MLP on RDKit
 ligand descriptors + ProLIF protein-ligand interaction counts + simple geometric features to
-re-rank the 20 Vina poses so that the top-1 pose is near-native (heavy-atom RMSD < 2 Å) more
-often than Vina's own ranking.
+re-rank the (up to) 20 Vina poses so that the top-1 pose is near-native (heavy-atom RMSD < 2 Å)
+more often than Vina's own ranking.
+
+**Honest headline: on this redocking set the MLP does not beat Vina's own ranking** (top-1 0.718 vs
+0.722, 273 complexes). A first version of the model reached 0.788, but the
+[scope / leakage audit](#scope-and-leakage-audit-read-before-quoting-the-numbers) showed that the gain
+came almost entirely from one feature, the pose-centroid distance to the docking-box centre; because the
+box is centred on the crystal ligand, that feature is a near-copy of the RMSD label. It is available in
+*redocking* but not in blind or cross-docking, so it is now excluded from the default model
+(`model.exclude_features` in `config/config.yaml`) and kept only as an ablation row below.
 
 ## Results
 
-**Status: pilot only (5 complexes, CPU). The full 308-complex run is pending phase 2.**
-The numbers below validate that the pipeline runs end to end; with 5 complexes they carry no
-statistical meaning and must not be quoted as a benchmark result.
+**Status: full run on the 308-complex PoseBusters subset (redocking, CPU only).** 308 attempted,
+304 docked, 273 scored end to end (see [complex accounting](#complex-accounting-308-to-304-to-273)).
+All ML numbers are out-of-fold `GroupKFold(5)` predictions grouped by complex; the MLP is
+re-fitted (including feature standardisation) inside every fold.
 
 ![top-1 success](figures/top1_success.png)
 
 <!-- RESULTS_TABLE_START -->
-Pilot: **273 complexes, 4745 poses, 70 features**; GroupKFold n_folds=5 over 273 complexes. Near-native pose fraction 0.08; oracle top-1 (any pose < 2 Å) 0.90.
+Full run: **273 complexes, 4745 poses, 69 features**; GroupKFold n_folds=5 over 273 complexes. Near-native pose fraction 0.08; oracle top-1 (any pose < 2 Å) 0.90.
 
 | metric | Vina rank | ML rescoring (out-of-fold) |
 |---|---|---|
-| top1_success | 0.722 | 0.788 |
-| top1_hits | 197 | 215 |
-| top3_near_native_fraction | 0.376 | 0.416 |
-| top3_enrichment | 4.579 | 5.058 |
-| roc_auc | 0.694 | 0.950 |
+| top1_success | 0.722 | 0.718 |
+| top1_hits | 197 | 196 |
+| top3_near_native_fraction | 0.376 | 0.378 |
+| top3_enrichment | 4.579 | 4.594 |
+| roc_auc | 0.694 | 0.907 |
 
-Wall-clock per complex (s, 8 Vina threads on CPU):
-
-| complex | prepare | dock | rmsd | features | total |
-|---|---|---|---|---|---|
-| 5SAK_ZRY | 0.7 | 2.4 | 0.0 | 2.9 | 6.0 |
-| 5SB2_1K2 | 0.1 | 7.1 | 0.0 | 2.4 | 9.6 |
-| 5SD5_HWI | 0.1 | 7.4 | 0.0 | 2.6 | 10.1 |
-| 5SIS_JSM | 0.1 | 7.0 | 0.0 | 3.3 | 10.4 |
-| 6M2B_EZO | 0.1 | 3.8 | 0.0 | 3.2 | 7.0 |
-| 6M73_FNR | 0.1 | 9.4 | 0.0 | 2.9 | 12.4 |
-| 6T88_MWQ | 0.2 | 1.4 | 0.0 | 3.1 | 4.8 |
-| 6TW5_9M2 | 0.5 | 10.2 | 0.0 | 4.3 | 15.0 |
-| 6TW7_NZB | 0.2 | 4.8 | 0.0 | 4.0 | 9.0 |
-| 6VTA_AKN | 0.1 | 31.1 | 0.0 | 3.5 | 34.7 |
-| 6WTN_RXT | 0.1 | 2.7 | 0.0 | 2.6 | 5.4 |
-| 6XBO_5MC | 0.1 | 4.7 | 0.0 | 3.2 | 8.0 |
-| 6XCT_478 | 0.2 | 15.8 | 0.0 | 3.7 | 19.7 |
-| 6XG5_TOP | 0.0 | 3.3 | 0.0 | 2.0 | 5.4 |
-| 6XHT_V2V | 0.4 | 22.0 | 0.0 | 4.2 | 26.6 |
-| 6XM9_V55 | 0.3 | 1.0 | 0.0 | 3.1 | 4.4 |
-| 6YJA_2BA | 0.1 | 55.6 | 0.0 | 3.6 | 59.3 |
-| 6YMS_OZH | 0.1 | 17.3 | 0.0 | 3.5 | 21.0 |
-| 6YQV_8K2 | 0.1 | 0.9 | 0.0 | 2.2 | 3.2 |
-| 6YQW_82I | 0.0 | 0.7 | 0.0 | 1.0 | 1.7 |
-| 6YR2_T1C | 0.1 | 12.9 | 0.0 | 3.4 | 16.4 |
-| 6YRV_PJ8 | 0.2 | 4.3 | 0.0 | 3.8 | 8.3 |
-| 6YSP_PAL | 0.7 | 3.7 | 0.0 | 3.2 | 7.5 |
-| 6YT6_PKE | 0.1 | 7.6 | 0.0 | 2.8 | 10.6 |
-| 6YYO_Q1K | 0.1 | 1.7 | 0.0 | 3.2 | 5.0 |
-| 6Z0R_Q4H | 0.1 | 0.7 | 0.0 | 1.6 | 2.3 |
-| 6Z14_Q4Z | 0.2 | 2.4 | 0.0 | 3.8 | 6.4 |
-| 6Z1C_7EY | 0.1 | 3.1 | 0.0 | 2.5 | 5.6 |
-| 6Z2C_Q5E | 0.1 | 4.1 | 0.0 | 2.4 | 6.7 |
-| 6Z4N_Q7B | 0.3 | 2.6 | 0.0 | 5.4 | 8.3 |
-| 6ZAE_ACV | 0.1 | 9.7 | 0.0 | 2.5 | 12.3 |
-| 6ZC3_JOR | 0.0 | 1.5 | 0.0 | 1.5 | 3.0 |
-| 6ZCY_QF8 | 0.1 | 6.1 | 0.0 | 2.8 | 8.9 |
-| 6ZK5_IMH | 0.2 | 4.1 | 0.0 | 3.6 | 7.8 |
-| 6ZPB_3D1 | 0.0 | 2.3 | 0.0 | 1.4 | 3.8 |
-| 7A1P_QW2 | 0.2 | 2.3 | 0.0 | 2.9 | 5.4 |
-| 7A9E_R4W | 0.1 | 0.5 | 0.0 | 1.7 | 2.3 |
-| 7A9H_TPP | 0.7 | 7.8 | 0.0 | 5.0 | 13.4 |
-| 7AFX_R9K | 0.2 | 2.1 | 0.0 | 3.1 | 5.3 |
-| 7AKL_RK5 | 0.1 | 1.8 | 0.0 | 2.5 | 4.4 |
-| 7AN5_RDH | 0.1 | 2.6 | 0.0 | 2.7 | 5.4 |
-| 7B2C_TP7 | 1.8 | 0.0 | 0.0 | 0.0 | 1.8 |
-| 7B94_ANP | 0.2 | 14.9 | 0.0 | 3.9 | 19.0 |
-| 7BCP_GCO | 0.1 | 3.2 | 0.0 | 2.5 | 5.8 |
-| 7BJJ_TVW | 0.1 | 0.7 | 0.0 | 1.5 | 2.2 |
-| 7BKA_4JC | 0.2 | 1.2 | 0.0 | 2.3 | 3.7 |
-| 7BMI_U4B | 0.2 | 1.6 | 0.0 | 2.0 | 3.8 |
-| 7BNH_BEZ | 0.1 | 0.7 | 0.0 | 1.7 | 2.5 |
-| 7BTT_F8R | 0.1 | 12.4 | 0.0 | 3.6 | 16.1 |
-| 7C0U_FGO | 0.2 | 25.6 | 0.0 | 5.0 | 30.8 |
-| 7C3U_AZG | 0.1 | 0.9 | 0.0 | 2.1 | 3.1 |
-| 7C8Q_DSG | 0.4 | 1.5 | 0.0 | 4.3 | 6.2 |
-| 7CD9_FVR | 0.2 | 9.1 | 0.0 | 5.0 | 14.3 |
-| 7CIJ_G0C | 0.3 | 5.3 | 0.0 | 4.9 | 10.5 |
-| 7CL8_TES | 0.1 | 1.7 | 0.0 | 2.8 | 4.6 |
-| 7CNQ_G8X | 0.9 | 1.2 | 0.0 | 2.9 | 5.0 |
-| 7CNS_PMV | 0.1 | 3.2 | 0.0 | 3.2 | 6.5 |
-| 7CTM_BDP | 0.2 | 1.8 | 0.0 | 3.1 | 5.1 |
-| 7CUO_PHB | 0.1 | 0.9 | 0.0 | 1.9 | 2.9 |
-| 7D5C_GV6 | 1.0 | 12.0 | 0.0 | 5.2 | 18.2 |
-| 7D6O_MTE | 1.3 | 0.0 | 0.0 | 0.0 | 1.3 |
-| 7DKT_GLF | 0.3 | 1.5 | 0.0 | 3.7 | 5.5 |
-| 7DQL_4CL | 0.1 | 0.9 | 0.0 | 1.7 | 2.6 |
-| 7DUA_HJ0 | 0.1 | 2.6 | 0.0 | 3.1 | 5.9 |
-| 7E4L_MDN | 0.1 | 1.3 | 0.0 | 2.4 | 3.9 |
-| 7EBG_J0L | 0.2 | 0.9 | 0.0 | 2.5 | 3.5 |
-| 7ECR_SIN | 0.5 | 1.2 | 0.0 | 3.0 | 4.7 |
-| 7ED2_A3P | 0.1 | 7.3 | 0.0 | 4.0 | 11.4 |
-| 7ELT_TYM | 0.1 | 16.2 | 0.0 | 4.3 | 20.6 |
-| 7EPV_FDA | 0.1 | 54.4 | 0.0 | 5.9 | 60.4 |
-| 7ES1_UDP | 0.1 | 7.8 | 0.0 | 3.9 | 11.8 |
-| 7F51_BA7 | 0.1 | 28.3 | 0.0 | 4.1 | 32.5 |
-| 7F5D_EUO | 0.0 | 2.3 | 0.0 | 1.3 | 3.7 |
-| 7F8T_FAD | 0.1 | 64.6 | 0.0 | 6.1 | 70.8 |
-| 7FB7_8NF | 0.1 | 0.6 | 0.0 | 1.3 | 2.0 |
-| 7FHA_ADX | 0.3 | 8.3 | 0.0 | 3.8 | 12.4 |
-| 7FRX_O88 | 1.8 | 10.8 | 0.0 | 6.7 | 19.4 |
-| 7FT9_4MB | 0.2 | 1.4 | 0.0 | 1.6 | 3.2 |
-| 7JG0_GAR | 0.0 | 3.2 | 0.0 | 2.2 | 5.4 |
-| 7JHQ_VAJ | 0.3 | 2.3 | 0.0 | 3.0 | 5.6 |
-| 7JMV_4NC | 0.1 | 1.1 | 0.0 | 1.9 | 3.1 |
-| 7JXX_VP7 | 0.1 | 8.4 | 0.0 | 2.5 | 11.0 |
-| 7JY3_VUD | 0.2 | 3.8 | 0.0 | 2.7 | 6.7 |
-| 7K0V_VQP | 0.3 | 9.8 | 0.0 | 3.9 | 14.0 |
-| 7KB1_WBJ | 0.7 | 5.3 | 0.0 | 4.5 | 10.4 |
-| 7KC5_BJZ | 0.1 | 6.2 | 0.0 | 2.1 | 8.5 |
-| 7KM8_WPD | 0.1 | 12.1 | 0.0 | 3.6 | 15.8 |
-| 7KQU_YOF | 0.2 | 2.2 | 0.0 | 2.4 | 4.8 |
-| 7KRU_ATP | 0.8 | 16.4 | 0.0 | 5.1 | 22.3 |
-| 7KZ9_XN7 | 0.4 | 2.1 | 0.0 | 3.4 | 5.8 |
-| 7L00_XCJ | 0.5 | 4.7 | 0.0 | 4.7 | 9.9 |
-| 7L03_F9F | 0.2 | 4.3 | 0.0 | 2.9 | 7.4 |
-| 7L5F_XNG | 0.1 | 4.6 | 0.0 | 1.9 | 6.5 |
-| 7L7C_XQ1 | 0.1 | 2.3 | 0.0 | 2.4 | 4.8 |
-| 7LCU_XTA | 0.1 | 10.6 | 0.0 | 4.1 | 14.9 |
-| 7LEV_0JO | 0.2 | 4.2 | 0.0 | 3.6 | 7.9 |
-| 7LJN_GTP | 0.4 | 13.5 | 0.0 | 3.9 | 17.8 |
-| 7LMO_NYO | 0.1 | 8.4 | 0.0 | 3.6 | 12.1 |
-| 7LOE_Y84 | 0.0 | 0.6 | 0.0 | 1.5 | 2.1 |
-| 7LOU_IFM | 0.4 | 1.2 | 0.0 | 2.5 | 4.2 |
-| 7LT0_ONJ | 0.1 | 3.2 | 0.0 | 2.7 | 6.0 |
-| 7LZD_YHY | 0.1 | 3.8 | 0.0 | 2.0 | 5.9 |
-| 7M31_TDR | 4.9 | 0.9 | 0.0 | 3.3 | 9.1 |
-| 7M3H_YPV | 0.5 | 4.3 | 0.0 | 4.7 | 9.5 |
-| 7M6K_YRJ | 0.3 | 13.7 | 0.0 | 3.9 | 17.9 |
-| 7MFP_Z7P | 0.5 | 45.9 | 0.0 | 7.0 | 53.4 |
-| 7MGT_ZD4 | 0.1 | 8.6 | 0.0 | 3.2 | 11.9 |
-| 7MGY_ZD1 | 0.5 | 6.8 | 0.0 | 3.7 | 11.1 |
-| 7MMH_ZJY | 0.1 | 102.5 | 0.0 | 3.4 | 106.0 |
-| 7MOI_HPS | 0.1 | 1.3 | 0.0 | 1.6 | 3.0 |
-| 7MSR_DCA | 0.4 | 64.8 | 0.0 | 5.2 | 70.5 |
-| 7MWN_WI5 | 0.1 | 4.6 | 0.0 | 2.1 | 6.9 |
-| 7MWU_ZPM | 0.1 | 0.7 | 0.0 | 2.9 | 3.7 |
-| 7MY1_IPE | 0.1 | 2.5 | 0.0 | 2.2 | 4.7 |
-| 7MYU_ZR7 | 0.2 | 6.5 | 0.0 | 4.4 | 11.1 |
-| 7N03_ZRP | 0.0 | 6.9 | 0.0 | 2.5 | 9.4 |
-| 7N4N_0BK | 0.2 | 5.6 | 0.0 | 4.2 | 10.0 |
-| 7N4W_P4V | 0.0 | 3.3 | 0.0 | 1.7 | 5.1 |
-| 7N6F_0I1 | 0.1 | 3.3 | 0.0 | 3.2 | 6.6 |
-| 7N7B_T3F | 0.2 | 13.4 | 0.0 | 2.5 | 16.1 |
-| 7N7H_CTP | 0.1 | 11.3 | 0.0 | 2.7 | 14.1 |
-| 7NF0_BYN | 0.4 | 12.8 | 0.0 | 5.5 | 18.8 |
-| 7NF3_4LU | 0.2 | 10.4 | 0.0 | 4.4 | 15.0 |
-| 7NFB_GEN | 0.3 | 3.3 | 0.0 | 2.5 | 6.1 |
-| 7NGW_UAW | 0.0 | 1.8 | 0.0 | 1.7 | 3.6 |
-| 7NLV_UJE | 0.1 | 4.8 | 0.0 | 2.7 | 7.6 |
-| 7NP6_UK8 | 0.1 | 6.7 | 0.0 | 1.8 | 8.5 |
-| 7NPL_UKZ | 0.1 | 6.0 | 0.0 | 2.2 | 8.3 |
-| 7NR8_UOE | 0.1 | 16.4 | 0.0 | 4.8 | 21.3 |
-| 7NSW_HC4 | 0.2 | 1.9 | 0.0 | 2.7 | 4.7 |
-| 7NU0_DCL | 0.3 | 1.1 | 0.0 | 3.0 | 4.4 |
-| 7NUT_GLP | 0.5 | 3.1 | 0.0 | 2.8 | 6.3 |
-| 7NXO_UU8 | 0.2 | 6.5 | 0.0 | 4.1 | 10.8 |
-| 7O0N_CDP | 0.1 | 7.3 | 0.0 | 3.5 | 10.9 |
-| 7O1T_5X8 | 0.1 | 6.2 | 0.0 | 3.3 | 9.7 |
-| 7ODY_DGI | 0.2 | 7.3 | 0.0 | 2.4 | 9.9 |
-| 7OEO_V9Z | 0.0 | 6.9 | 0.0 | 1.9 | 8.8 |
-| 7OFF_VCB | 0.1 | 4.0 | 0.0 | 2.2 | 6.3 |
-| 7OFK_VCH | 0.1 | 7.0 | 0.0 | 2.8 | 9.9 |
-| 7OLI_8HG | 0.1 | 2.8 | 0.0 | 2.9 | 5.8 |
-| 7OMX_CNA | 0.1 | 34.7 | 0.0 | 3.9 | 38.6 |
-| 7OP9_06K | 1.4 | 1.0 | 0.0 | 2.7 | 5.1 |
-| 7OPG_06N | 0.4 | 2.5 | 0.0 | 2.8 | 5.7 |
-| 7OSO_0V1 | 0.1 | 1.3 | 0.0 | 2.5 | 3.9 |
-| 7OZ9_NGK | 0.3 | 4.0 | 0.0 | 3.0 | 7.4 |
-| 7OZC_G6S | 0.1 | 4.1 | 0.0 | 2.9 | 7.2 |
-| 7P1F_KFN | 0.2 | 4.0 | 0.0 | 3.0 | 7.2 |
-| 7P1M_4IU | 0.1 | 4.5 | 0.0 | 2.0 | 6.6 |
-| 7P2I_MFU | 0.1 | 1.2 | 0.0 | 1.6 | 2.8 |
-| 7P4C_5OV | 0.6 | 2.0 | 0.0 | 2.8 | 5.4 |
-| 7P5T_5YG | 0.1 | 4.4 | 0.0 | 2.6 | 7.1 |
-| 7PGX_FMN | 0.0 | 12.3 | 0.0 | 2.4 | 14.8 |
-| 7PIH_7QW | 0.2 | 3.5 | 0.0 | 3.4 | 7.0 |
-| 7PJQ_OWH | 0.1 | 0.9 | 0.0 | 1.2 | 2.2 |
-| 7PK0_BYC | 0.1 | 101.1 | 0.0 | 4.4 | 105.6 |
-| 7PL1_SFG | 0.1 | 9.1 | 0.0 | 2.7 | 11.8 |
-| 7POM_7VZ | 0.3 | 3.1 | 0.0 | 3.2 | 6.6 |
-| 7PRI_7TI | 0.2 | 3.1 | 0.0 | 2.8 | 6.1 |
-| 7PRM_81I | 0.1 | 5.0 | 0.0 | 2.4 | 7.5 |
-| 7PT3_3KK | 0.9 | 103.3 | 0.0 | 9.1 | 113.3 |
-| 7PUV_84Z | 0.3 | 3.5 | 0.0 | 3.2 | 7.1 |
-| 7Q25_8J9 | 1.6 | 15.4 | 0.0 | 6.7 | 23.7 |
-| 7Q27_8KC | 0.6 | 0.0 | 0.0 | 0.0 | 0.6 |
-| 7Q2B_M6H | 0.1 | 1.0 | 0.0 | 2.4 | 3.5 |
-| 7Q5I_I0F | 0.5 | 5.3 | 0.0 | 4.7 | 10.5 |
-| 7QE4_NGA | 0.4 | 2.0 | 0.0 | 1.4 | 3.8 |
-| 7QF4_RBF | 0.0 | 6.3 | 0.0 | 1.4 | 7.8 |
-| 7QFM_AY3 | 0.1 | 1.8 | 0.0 | 2.5 | 4.3 |
-| 7QGP_DJ8 | 0.1 | 16.6 | 0.0 | 2.9 | 19.5 |
-| 7QHG_T3B | 0.1 | 24.6 | 0.0 | 3.8 | 28.5 |
-| 7QHL_D5P | 0.4 | 6.5 | 0.0 | 3.5 | 10.4 |
-| 7QPP_VDX | 0.1 | 6.5 | 0.0 | 2.3 | 9.0 |
-| 7QTA_URI | 0.1 | 2.1 | 0.0 | 2.7 | 5.0 |
-| 7R3D_APR | 0.4 | 19.9 | 0.0 | 2.9 | 23.2 |
-| 7R59_I5F | 0.1 | 1.0 | 0.0 | 2.6 | 3.6 |
-| 7R6J_2I7 | 0.7 | 9.8 | 0.0 | 5.1 | 15.6 |
-| 7R7R_AWJ | 0.1 | 8.6 | 0.0 | 3.0 | 11.7 |
-| 7R9N_F97 | 0.2 | 4.6 | 0.0 | 3.0 | 7.8 |
-| 7RC3_SAH | 0.2 | 9.0 | 0.0 | 3.6 | 12.8 |
-| 7RH3_59O | 0.0 | 11.4 | 0.0 | 1.9 | 13.3 |
-| 7RKW_5TV | 0.2 | 3.4 | 0.0 | 2.9 | 6.5 |
-| 7RNI_60I | 0.5 | 5.0 | 0.0 | 5.8 | 11.3 |
-| 7ROR_69X | 0.3 | 22.1 | 0.0 | 5.2 | 27.5 |
-| 7ROU_66I | 0.1 | 19.5 | 0.0 | 4.4 | 23.9 |
-| 7RSV_7IQ | 0.4 | 1.5 | 0.0 | 3.4 | 5.2 |
-| 7RWS_4UR | 0.1 | 61.5 | 0.0 | 3.2 | 64.8 |
-| 7RZL_NPO | 0.1 | 0.9 | 0.0 | 2.1 | 3.0 |
-| 7SCW_GSP | 0.1 | 15.3 | 0.0 | 2.6 | 18.0 |
-| 7SDD_4IP | 0.1 | 12.6 | 0.0 | 3.4 | 16.2 |
-| 7SFO_98L | 0.1 | 4.0 | 0.0 | 2.4 | 6.4 |
-| 7SIU_9ID | 0.2 | 5.5 | 0.0 | 3.6 | 9.2 |
-| 7SUC_COM | 3.5 | 1.1 | 0.0 | 4.0 | 8.7 |
-| 7SZA_DUI | 0.2 | 1.8 | 0.0 | 2.4 | 4.5 |
-| 7T0D_FPP | 0.3 | 7.5 | 0.0 | 6.5 | 14.3 |
-| 7T1D_E7K | 0.2 | 5.5 | 0.0 | 2.9 | 8.6 |
-| 7T3E_SLB | 0.3 | 4.8 | 0.0 | 3.5 | 8.6 |
-| 7TB0_UD1 | 0.7 | 21.6 | 0.0 | 5.9 | 28.2 |
-| 7TBU_S3P | 0.3 | 2.6 | 0.0 | 2.7 | 5.7 |
-| 7TE8_P0T | 0.1 | 3.9 | 0.0 | 2.6 | 6.6 |
-| 7TH4_FFO | 0.3 | 13.7 | 0.0 | 3.8 | 17.9 |
-| 7THI_PGA | 0.2 | 1.3 | 0.0 | 2.0 | 3.5 |
-| 7TM6_GPJ | 0.3 | 1.9 | 0.0 | 2.9 | 5.1 |
-| 7TOM_5AD | 0.2 | 3.2 | 0.0 | 3.7 | 7.1 |
-| 7TS6_KMI | 0.8 | 2.1 | 0.0 | 3.4 | 6.3 |
-| 7TSF_H4B | 0.3 | 2.2 | 0.0 | 3.4 | 5.9 |
-| 7TUO_KL9 | 0.1 | 5.8 | 0.0 | 3.6 | 9.5 |
-| 7TXK_LW8 | 0.3 | 2.0 | 0.0 | 2.9 | 5.1 |
-| 7TYP_KUR | 0.1 | 8.5 | 0.0 | 2.7 | 11.3 |
-| 7U0U_FK5 | 0.1 | 123.5 | 0.0 | 6.1 | 129.7 |
-| 7U3J_L6U | 0.1 | 16.3 | 0.0 | 2.5 | 18.9 |
-| 7UAS_MBU | 0.1 | 9.3 | 0.0 | 2.5 | 11.9 |
-| 7UAW_MF6 | 0.1 | 46.5 | 0.0 | 2.0 | 48.6 |
-| 7UJ4_OQ4 | 0.2 | 18.5 | 0.0 | 6.7 | 25.4 |
-| 7UJ5_DGL | 0.7 | 1.7 | 0.0 | 2.8 | 5.2 |
-| 7UJF_R3V | 0.2 | 8.7 | 0.0 | 2.4 | 11.3 |
-| 7ULC_56B | 0.2 | 14.0 | 0.0 | 3.1 | 17.3 |
-| 7UMW_NAD | 0.1 | 32.2 | 0.0 | 4.9 | 37.3 |
-| 7UQ3_O2U | 0.1 | 1.2 | 0.0 | 1.8 | 3.1 |
-| 7USH_82V | 0.0 | 2.3 | 0.0 | 1.4 | 3.8 |
-| 7UTW_NAI | 0.2 | 32.5 | 0.0 | 5.2 | 38.0 |
-| 7UXS_OJC | 0.2 | 31.4 | 0.0 | 3.2 | 34.8 |
-| 7UY4_SMI | 0.2 | 3.5 | 0.0 | 3.2 | 6.8 |
-| 7UYB_OK0 | 0.1 | 6.1 | 0.0 | 2.4 | 8.6 |
-| 7V14_ORU | 0.1 | 7.0 | 0.0 | 2.8 | 9.9 |
-| 7V3N_AKG | 0.1 | 1.7 | 0.0 | 2.1 | 3.9 |
-| 7V3S_5I9 | 0.1 | 10.8 | 0.0 | 3.5 | 14.4 |
-| 7V43_C4O | 0.1 | 0.7 | 0.0 | 2.6 | 3.4 |
-| 7VB8_STL | 0.2 | 2.1 | 0.0 | 3.6 | 5.9 |
-| 7VBU_6I4 | 0.1 | 1.0 | 0.0 | 1.9 | 3.0 |
-| 7VC5_9SF | 0.1 | 3.6 | 0.0 | 3.0 | 6.8 |
-| 7VKZ_NOJ | 0.6 | 1.4 | 0.0 | 4.0 | 6.0 |
-| 7VQ9_ISY | 0.1 | 2.5 | 0.0 | 2.7 | 5.3 |
-| 7VWF_K55 | 0.1 | 9.9 | 0.0 | 3.7 | 13.8 |
-| 7VYJ_CA0 | 0.6 | 6.9 | 0.0 | 4.4 | 11.9 |
-| 7W05_GMP | 0.0 | 2.6 | 0.0 | 1.1 | 3.8 |
-| 7W06_ITN | 0.0 | 1.1 | 0.0 | 1.6 | 2.7 |
-| 7WCF_ACP | 0.1 | 12.1 | 0.0 | 4.0 | 16.2 |
-| 7WDT_NGS | 0.3 | 3.4 | 0.0 | 3.3 | 6.9 |
-| 7WJB_BGC | 0.3 | 1.6 | 0.0 | 2.6 | 4.5 |
-| 7WKL_CAQ | 0.5 | 1.0 | 0.0 | 2.8 | 4.3 |
-| 7WL4_JFU | 0.1 | 6.9 | 0.0 | 3.5 | 10.5 |
-| 7WPW_F15 | 0.0 | 4.4 | 0.0 | 2.1 | 6.5 |
-| 7WQQ_5Z6 | 0.1 | 5.7 | 0.0 | 2.1 | 7.8 |
-| 7WUX_6OI | 0.7 | 4.7 | 0.0 | 3.6 | 9.0 |
-| 7WUY_76N | 0.3 | 5.9 | 0.0 | 4.2 | 10.5 |
-| 7WY1_D0L | 0.3 | 0.0 | 0.0 | 0.0 | 0.3 |
-| 7X5N_5M5 | 0.2 | 5.3 | 0.0 | 2.9 | 8.4 |
-| 7X9K_8OG | 0.0 | 4.8 | 0.0 | 1.2 | 6.0 |
-| 7XBV_APC | 0.1 | 14.2 | 0.0 | 3.8 | 18.2 |
-| 7XFA_D9J | 0.0 | 12.5 | 0.0 | 2.1 | 14.6 |
-| 7XG5_PLP | 0.2 | 2.3 | 0.0 | 3.4 | 5.9 |
-| 7XI7_4RI | 0.0 | 3.3 | 0.0 | 2.5 | 5.8 |
-| 7XJN_NSD | 0.4 | 2.0 | 0.0 | 3.1 | 5.6 |
-| 7XPO_UPG | 0.2 | 16.6 | 0.0 | 4.6 | 21.4 |
-| 7XQZ_FPF | 0.1 | 7.0 | 0.0 | 4.5 | 11.6 |
-| 7XRL_FWK | 0.7 | 2.5 | 0.0 | 4.9 | 8.1 |
-| 7YZU_DO7 | 0.1 | 2.6 | 0.0 | 2.8 | 5.5 |
-| 7Z1Q_NIO | 0.1 | 0.7 | 0.0 | 1.6 | 2.4 |
-| 7Z2O_IAJ | 0.1 | 0.9 | 0.0 | 1.7 | 2.7 |
-| 7Z7F_IF3 | 0.1 | 1.1 | 0.0 | 1.9 | 3.1 |
-| 7ZCC_OGA | 1.2 | 1.4 | 0.0 | 3.3 | 5.8 |
-| 7ZDY_6MJ | 0.5 | 1.2 | 0.0 | 3.4 | 5.2 |
-| 7ZF0_DHR | 0.2 | 1.0 | 0.0 | 2.9 | 4.1 |
-| 7ZHP_IQY | 0.1 | 11.3 | 0.0 | 2.8 | 14.2 |
-| 7ZL5_IWE | 0.1 | 3.5 | 0.0 | 2.7 | 6.4 |
-| 7ZOC_T8E | 0.1 | 1.6 | 0.0 | 2.4 | 4.2 |
-| 7ZTL_BCN | 0.1 | 2.1 | 0.0 | 2.2 | 4.4 |
-| 7ZU2_DHT | 0.1 | 1.7 | 0.0 | 2.1 | 3.9 |
-| 7ZXV_45D | 0.1 | 12.1 | 0.0 | 3.2 | 15.4 |
-| 7ZZW_KKW | 0.5 | 4.7 | 0.0 | 3.9 | 9.1 |
-| 8A1H_DLZ | 0.4 | 4.8 | 0.0 | 3.1 | 8.2 |
-| 8A2D_KXY | 0.1 | 17.6 | 0.0 | 3.7 | 21.3 |
-| 8AAU_LH0 | 0.1 | 3.4 | 0.0 | 2.6 | 6.1 |
-| 8AEM_LVF | 0.1 | 1.0 | 0.0 | 2.5 | 3.7 |
-| 8AIE_M7L | 0.2 | 7.7 | 0.0 | 6.0 | 13.9 |
-| 8AP0_PRP | 0.1 | 6.5 | 0.0 | 3.4 | 9.9 |
-| 8AQL_PLG | 0.6 | 5.3 | 0.0 | 4.8 | 10.7 |
-| 8AUH_L9I | 0.2 | 1.2 | 0.0 | 2.9 | 4.3 |
-| 8AY3_OE3 | 0.1 | 3.1 | 0.0 | 3.7 | 6.9 |
-| 8B8H_OJQ | 0.4 | 4.7 | 0.0 | 3.7 | 8.7 |
-| 8BOM_QU6 | 0.1 | 6.2 | 0.0 | 3.0 | 9.3 |
-| 8BTI_RFO | 0.1 | 1.4 | 0.0 | 2.9 | 4.3 |
-| 8C3N_ADP | 0.1 | 7.7 | 0.0 | 2.2 | 10.0 |
-| 8C5M_MTA | 0.1 | 2.7 | 0.0 | 2.5 | 5.4 |
-| 8CNH_V6U | 0.3 | 5.2 | 0.0 | 3.8 | 9.3 |
-| 8CSD_C5P | 0.5 | 4.5 | 0.0 | 3.6 | 8.5 |
-| 8D19_GSH | 0.2 | 6.6 | 0.0 | 3.3 | 10.2 |
-| 8D39_QDB | 0.1 | 2.0 | 0.0 | 2.5 | 4.7 |
-| 8D5D_5DK | 0.6 | 9.6 | 0.0 | 5.0 | 15.2 |
-| 8DHG_T78 | 0.1 | 7.9 | 0.0 | 2.1 | 10.1 |
-| 8DKO_TFB | 0.3 | 0.9 | 0.0 | 2.9 | 4.0 |
-| 8DP2_UMA | 0.1 | 43.6 | 0.0 | 4.9 | 48.6 |
-| 8DSC_NCA | 0.3 | 0.8 | 0.0 | 3.3 | 4.4 |
-| 8EAB_VN2 | 0.1 | 25.1 | 0.1 | 2.8 | 28.0 |
-| 8EX2_Q2Q | 0.1 | 2.5 | 0.0 | 2.6 | 5.2 |
-| 8EXL_799 | 0.2 | 17.5 | 0.0 | 4.1 | 21.8 |
-| 8EYE_X4I | 0.4 | 7.3 | 0.0 | 6.0 | 13.8 |
-| 8F4J_PHO | 31.4 | 66.6 | 0.0 | 0.8 | 98.8 |
-| 8F8E_XJI | 0.1 | 7.0 | 0.0 | 3.3 | 10.4 |
-| 8FAV_4Y5 | 0.2 | 7.8 | 0.0 | 3.6 | 11.6 |
-| 8FLV_ZB9 | 0.1 | 5.1 | 0.0 | 2.9 | 8.1 |
-| 8FO5_Y4U | 0.2 | 1.6 | 0.0 | 2.5 | 4.3 |
-| 8G0V_YHT | 0.8 | 5.7 | 0.0 | 4.9 | 11.4 |
-| 8G6P_API | 0.2 | 2.8 | 0.0 | 2.1 | 5.0 |
-| 8GFD_ZHR | 0.2 | 6.6 | 0.0 | 3.6 | 10.3 |
-| 8HFN_XGC | 0.1 | 5.3 | 0.0 | 3.6 | 9.1 |
-| 8HO0_3ZI | 0.1 | 2.2 | 0.0 | 3.0 | 5.3 |
-| 8SLG_G5A | 0.3 | 7.3 | 0.0 | 6.1 | 13.7 |
-
-Mean 12 s per complex -> about 290 complexes per CPU-hour, i.e. roughly 1159-1738 complexes in 4-6 CPU-hours at this exhaustiveness (the 308-complex subset needs about 1.1 h). Caveat: the pilot was drawn from small-to-medium ligands (15-35 heavy atoms) and receptors < 8000 atoms, so this is an optimistic lower bound; larger ligands/boxes dock slower (Vina scales with box volume and torsions). Plan phase 2 with a 2-3x margin, and re-check timing on the first 30 complexes of the full run.
+Wall-clock over 308 attempted complexes (s per complex, 8 Vina threads on CPU; full table in `results/timings.csv`): mean 12.4, median 7.8, max 129.7; of which docking mean 8.9 s, features mean 3.1 s. Total 1.06 h (docking 0.76 h).
 
 Software: vina 1.2.7, meeko 0.8.0, rdkit 2026.03.1, prolif 2.2.1, openbabel 3.2.1, torch 2.13.0, MDAnalysis 2.10.0, sklearn 1.9.0.
 <!-- RESULTS_TABLE_END -->
 
-Hardware: laptop with 16 logical CPU cores, 14 GB RAM, NVIDIA RTX 4060 Laptop 8 GB (GPU **not**
-used in phase 1; Vina runs on 8 CPU threads, the MLP trains on CPU).
+Hardware: laptop, AMD Ryzen 7 8845HS (16 logical cores), 14 GB RAM, NVIDIA RTX 4060 Laptop 8 GB
+(GPU **not** used; Vina runs on 8 CPU threads, the MLP trains on CPU). Exact package versions:
+`results/versions.json` and the pinned `environment.lock.yml`.
+
+## Scope and leakage audit (read before quoting the numbers)
+
+A pooled ROC-AUC jump from 0.69 to 0.95 is too good for a 70-feature MLP on 4745 poses, so the
+feature set was audited (`scripts/audit_features.py`, outputs in `results/audit/`).
+
+* **Where the signal comes from.** The docking box is centred on the crystal ligand's heavy-atom
+  centroid (`prepare.docking_box`). The geometric feature `geo_centroid_offset` = distance from the
+  pose centroid to that box centre is therefore the translational component of the RMSD label
+  itself. Alone, with no model, it gives pooled AUC 0.966 and top-1 0.744 (already above Vina's
+  0.722); every near-native pose has an offset < 1.7 Å, the median non-native pose 3.4 Å.
+* **Ablation** (out-of-fold, mean over 3 MLP seeds; `results/audit/ablation.md`):
+
+  | variant | top-1 success | pooled AUC | per-complex AUC | 95% CI of top-1 gain vs Vina |
+  |---|---|---|---|---|
+  | Vina rank (baseline) | 0.722 | 0.694 | 0.935 | - |
+  | `geo_centroid_offset` alone, no model | 0.744 | 0.966 | 0.966 | - |
+  | full MLP, 70 features (first version, no longer the default) | 0.791 | 0.949 | 0.971 | [+0.03, +0.10] |
+  | MLP without `geo_centroid_offset` (69) = **current default** | 0.716 | 0.905 | 0.935 | [-0.03, +0.03] |
+  | MLP, Vina terms only (8) | 0.719 | 0.896 | 0.933 | [-0.02, +0.01] |
+
+  Without the box-centre feature the MLP is statistically indistinguishable from Vina's own ranking.
+  ProLIF counts, burial and consensus features add nothing measurable to top-1 on this set.
+* **Is it leakage?** Not of the label into the training set: no crystal-pose coordinate, RMSD or
+  pose index is a model input, folds are strict by complex, standardisation is fitted per fold. It
+  is a *scope* artifact: in redocking the box centre is defined by the answer. The first-version
+  numbers are valid only for the question "given a box centred on the true ligand site, which of
+  Vina's poses sits closest to that centre?", which is trivial. For blind docking, cross-docking,
+  or a pocket-detection-defined box the feature is unavailable and the honest expectation from
+  this repository is **no improvement over Vina's ranking**.
+* **Pooled AUC is the wrong metric for re-ranking.** It mixes easy and hard complexes; the
+  per-complex mean AUC (0.935 for Vina, i.e. Vina already separates poses well within a complex)
+  is the relevant one and moves only 0.935 -> 0.971 even with the leaky feature.
+
+### Complex accounting (308 to 304 to 273)
+
+`results/audit/failed_complexes.csv` lists every dropped id with stage and reason.
+
+| step | n | reason |
+|---|---|---|
+| ids in the PoseBusters 308 subset | 308 | `data/ids_308.txt` |
+| prepared (receptor/ligand PDBQT, box) | 308 | - |
+| docked | 304 | 4 receptors contain elements Vina has no atom type for (Xe: 7B2C_TP7; Mo: 7D6O_MTE, 7WY1_D0L; B: 7Q27_8KC) |
+| featurised and scored | 273 | 25 metalloproteins: ProLIF `VdWContact` has no vdW radius for Fe (14), Mn (8), Co (3); 5 ProLIF residue-key mismatches after OpenBabel protonation; 1 MDAnalysis PDB parse error (8F4J_PHO) |
+
+Consequence: the 273-complex set is **depleted of metal-containing binding sites** (29 of the 35
+dropped complexes carry Fe/Mn/Co/Mo/Xe/B), which are a hard class for Vina, so both the Vina and
+the ML success rates are optimistic relative to the full subset. The metal failures are a
+configuration issue (ProLIF `Fingerprint(..., parameters={"VdWContact": {"vdwradii": ...}})`), not a
+data problem, and are left as-is so that code and `results/` stay consistent.
 
 ## What / why
 
@@ -353,7 +100,8 @@ near-native pose is among the top-20 Vina modes but not at rank 1. A cheap learn
 function that uses interaction-level information (H-bonds, pi-stacking, salt bridges, burial,
 pose consensus) can close part of that gap. This repository is a compact, fully reproducible
 version of that experiment on a public, well-curated set, with a strict complex-level split
-so no receptor/ligand pair leaks between training and evaluation folds.
+so no receptor/ligand pair leaks between training and evaluation folds. The result of the
+experiment is negative once the box-centre feature is excluded (see the audit above).
 
 ## Pipeline
 
@@ -376,7 +124,7 @@ parameterised by `config/config.yaml`.
 |---|---|
 | ligand 2D | fixed list of 40 RDKit descriptors (`features.RDKIT_2D`) |
 | interactions | ProLIF counts: HBDonor, HBAcceptor, Hydrophobic, PiStacking, Cationic, Anionic, CationPi, PiCation, XBDonor, VdWContact (+ total) |
-| geometry | heavy-atom contacts < 4 Å, buried fraction (ligand atoms with a protein atom < 4.5 Å), min / mean-min distance, clashes < 2.5 Å, centroid offset from box centre, radius of gyration |
+| geometry | heavy-atom contacts < 4 Å, buried fraction (ligand atoms with a protein atom < 4.5 Å), min / mean-min distance, clashes < 2.5 Å, **centroid offset from box centre (box = crystal ligand; see audit)**, radius of gyration |
 | docking | Vina total / inter / intra / torsional terms, rank, rank fraction, gap to best score, score per heavy atom |
 | consensus | number of other poses within 2 Å, mean RMSD to other poses, RMSD to the rank-1 pose |
 
@@ -387,18 +135,29 @@ parameterised by `config/config.yaml`.
   complexes with *any* near-native pose among the 20 modes (upper bound for any rescoring).
 * **top-3 enrichment**: near-native fraction among the three best-ranked poses divided by the
   near-native fraction over all poses.
-* **ROC-AUC**: per-pose discrimination of near-native vs not, pooled over out-of-fold predictions.
+* **ROC-AUC**: per-pose discrimination of near-native vs not, pooled over out-of-fold predictions
+  (inflated by between-complex differences; `results/audit/ablation.md` also reports the mean
+  per-complex AUC).
+* Class imbalance (8 % near-native poses) is handled with `pos_weight` in the BCE loss; features
+  are standardised with training-fold statistics only.
 * Cross-validation: `GroupKFold(5)` grouped by complex id (with < 5 complexes the fold count
   drops to the number of complexes, i.e. leave-one-complex-out).
 
 ## Reproduce
 
 ```bash
-mamba env create -f environment.yml && conda activate dock   # rdkit, vina, meeko, openbabel, prolif, torch
-bash run_all.sh                       # pilot: data/pilot_ids.txt (5 complexes)
-IDS=data/ids_308.txt bash run_all.sh  # phase 2: full 308-complex run (CPU hours, see timings)
+mamba env create -f environment.lock.yml && conda activate dock   # pinned; environment.yml = unpinned spec
+bash run_all.sh                       # pilot: data/pilot_ids.txt (5 complexes, ~1 min; smoke test)
+IDS=data/ids_308.txt bash run_all.sh  # full 308-complex run (~1.1 h on the hardware above)
 python -m pytest -q tests             # unit tests (RDKit only)
+python scripts/audit_features.py      # feature ablation -> results/audit/
 ```
+
+`run_all.sh` writes `results/features.csv`, `results/metrics.json`, `results/predictions.csv`,
+`results/report.md`, `figures/` and the README results block for **whatever id list it is given**:
+running the 5-complex pilot after the full run overwrites the full-run summary files (per-complex
+outputs under `results/docking/` are cached and kept). Commit or copy `results/` first. The pilot
+was re-run on 2026-09-06 in a clean copy of the repository (exit 0, 68 s wall-clock).
 
 Individual stages: `python -m dockrescore {versions,select-pilot,prepare,dock,rmsd,features,train,report} --ids FILE`.
 Outputs: `results/docking/<id>/` (git-ignored poses, scores, rmsd, per-complex features and
@@ -430,7 +189,15 @@ timings), `results/features.csv|.parquet`, `results/metrics.json`, `results/pred
   are specific to Vina's pose ensemble.
 * Receptor protonation by OpenBabel at pH 7.4 and ligand protonation "as given" in the SDF; no
   tautomer / protomer enumeration; cofactors and metals are kept as rigid receptor atoms.
-* Phase 1 = 5-complex pilot on CPU; the numbers in `results/` are a pipeline check only.
+* The ML gain depends on a feature that encodes the crystal-ligand position (box centre); see the
+  audit section. Without it the model does not improve on Vina's ranking on this set.
+* 35 of 308 complexes (mostly metalloproteins) are missing from the scored set; results are
+  optimistic for the full subset.
+* Vina at exhaustiveness 8 with 20 modes and a 4 kcal/mol energy window keeps 2-20 poses per
+  complex (mean 17.4); the oracle (any near-native pose) is 0.90, so ~10 % of complexes cannot be
+  rescued by any re-ranking.
+* Single run, single seed for docking; MLP seed variation is reported in `results/audit/ablation.md`
+  (top-1 varies by about +/-0.01 across seeds).
 
 ## Citation
 
@@ -438,8 +205,16 @@ Buttenschoen M., Morris G. M., Deane C. M. *PoseBusters: AI-based docking method
 generate physically valid poses or generalise to novel sequences.* Chem. Sci. 2024, 15, 3130-3139.
 https://doi.org/10.1039/D3SC04185A (data: https://zenodo.org/records/8278563).
 
-Eberhardt J., Santos-Martins D., Tillack A. F., Forli S. *AutoDock Vina 1.2.0.* J. Chem. Inf.
-Model. 2021, 61, 3891-3898. Bouysset C., Fiorucci S. *ProLIF.* J. Cheminform. 2021, 13, 72.
-Meeko: https://github.com/forlilab/Meeko. RDKit: https://www.rdkit.org.
+Eberhardt J., Santos-Martins D., Tillack A. F., Forli S. *AutoDock Vina 1.2.0: New Docking Methods,
+Expanded Force Field, and Python Bindings.* J. Chem. Inf. Model. 2021, 61, 3891-3898.
+https://doi.org/10.1021/acs.jcim.1c00203. Trott O., Olson A. J. *AutoDock Vina.* J. Comput. Chem.
+2010, 31, 455-461. https://doi.org/10.1002/jcc.21334.
+
+Bouysset C., Fiorucci S. *ProLIF: a library to encode molecular interactions as fingerprints.*
+J. Cheminform. 2021, 13, 72. https://doi.org/10.1186/s13321-021-00548-6.
+
+Meeko (Forli lab): https://github.com/forlilab/Meeko. RDKit: https://www.rdkit.org.
+OpenBabel: O'Boyle N. M. et al. J. Cheminform. 2011, 3, 33. MDAnalysis: Michaud-Agrawal N. et al.
+J. Comput. Chem. 2011, 32, 2319-2327; Gowers R. J. et al. Proc. SciPy 2016, 98-105.
 
 License: MIT (c) 2026 Oleksandr Shovkoplias.

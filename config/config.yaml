@@ -60,3 +60,7 @@ model:
   seed: 0
   device: cpu
   torch_threads: 4
+  # Features excluded from the default model. geo_centroid_offset is the distance of a pose to the
+  # docking-box centre; because the box is centred on the crystal ligand in redocking, this feature is
+  # a near-copy of the RMSD label (see README, 'Scope and leakage audit') and is excluded by default.
+  exclude_features: [geo_centroid_offset]
